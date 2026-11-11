@@ -1,4 +1,4 @@
-@extends('layouts.app', ['judul' => 'Pembayaran'])
+@extends('layouts.app', ['judul' => 'Kasir'])
 @section('isi')
 @php use App\Tu\Hitung; use App\Tu\Tampil; @endphp
 <section class="kartu">
@@ -17,73 +17,91 @@
         <p class="redup">Tidak ada bukti yang menunggu.</p>
     @endforelse
 </section>
-<form class="kartu formulir" method="get">
-    <label>Tingkat<select name="tingkat"><option value="">Semua</option>@foreach(['X','XI','XII'] as $t)<option @selected(request('tingkat')===$t)>{{ $t }}</option>@endforeach</select></label>
-    <label>Rombel<select name="rombel"><option value="">Semua</option>@foreach($rombel as $kelas)<option value="{{ $kelas->id }}" @selected((string) request('rombel')===(string) $kelas->id)>{{ $kelas->nama }}</option>@endforeach</select></label>
-    <label>BK<select name="bk"><option value="">Semua</option>@foreach($rombel->pluck('bk.nama')->filter()->unique() as $nama)<option @selected(request('bk')===$nama)>{{ $nama }}</option>@endforeach</select></label>
-    <button class="tombol">Saring</button>
-</form>
-<form class="kartu formulir" method="post" action="{{ route('tu.bayar.catat') }}">
-    @csrf
-    <h2>Catat di loket</h2>
-    <label>Murid<select name="siswa_id" required>@foreach($semua as $murid)<option value="{{ $murid->id }}">{{ $murid->rombel->nama }} · {{ $murid->nama }}</option>@endforeach</select></label>
-    <label>Tagihan<select name="tagihan_id" required>@foreach($tagihan as $item)<option value="{{ $item->id }}">{{ $item->nama }}</option>@endforeach</select></label>
-    <label>Jumlah<input type="number" name="jumlah" min="1" required></label>
-    <label>Tanggal<input type="date" name="tanggal" required value="{{ now()->toDateString() }}"></label>
-    <label>Cara<select name="metode"><option value="tunai">Tunai</option><option value="transfer">Transfer</option></select></label>
-    <button class="tombol utama">Catat pembayaran</button>
-</form>
-<input class="saring" data-saring="#tabel-bayar" placeholder="Cari nama, NIS, atau kelas">
-<div class="tabel-bungkus">
-    <table id="tabel-bayar">
-        <thead><tr><th>Murid</th><th>Tagihan</th><th></th></tr></thead>
-        <tbody>
-        @foreach($siswa as $murid)
-            <tr>
-                <td><strong>{{ $murid->nama }}</strong><br><span class="redup">{{ $murid->nis }} · {{ $murid->rombel->nama }} · {{ Hitung::kode($murid->nis) }}</span></td>
-                <td>
-                    @foreach(Hitung::tagihanSiswa($murid) as $tagihanItem)
-                        @php $beban = Hitung::beban($murid, $tagihanItem); @endphp
-                        <p class="baris"><span>{{ $tagihanItem->nama }} · {{ Hitung::statusBayar($beban['harus'], $beban['masuk']) }} @if(Hitung::lewat($tagihanItem->tempo->toDateString(), $beban['sisa'])) <span class="lencana buruk">Lewat</span> @endif</span><strong>{{ Tampil::rupiah($beban['sisa']) }}</strong></p>
-                    @endforeach
-                    <details>
-                        <summary>Koreksi dan keringanan</summary>
-                        @foreach(Hitung::tagihanSiswa($murid) as $tagihanItem)
-                            @php $beban = Hitung::beban($murid, $tagihanItem); @endphp
-                            @if($beban['masuk'] > 0)
-                                <form class="formulir" method="post" action="{{ route('tu.koreksi') }}">
-                                    @csrf
-                                    <input type="hidden" name="siswa_id" value="{{ $murid->id }}">
-                                    <input type="hidden" name="tagihan_id" value="{{ $tagihanItem->id }}">
-                                    <input name="nama" value="{{ $tagihanItem->nama }}">
-                                    <input type="number" name="nominal" min="0" value="{{ $tagihanItem->nominal }}">
-                                    @if($tagihanItem->sasaran === 'tingkat')
-                                        <select name="tingkat"><option value="semua" @selected($tagihanItem->tingkat==='semua')>Semua</option>@foreach(['X','XI','XII'] as $t)<option @selected($tagihanItem->tingkat===$t)>{{ $t }}</option>@endforeach</select>
-                                    @else
-                                        <input type="hidden" name="tingkat" value="{{ $tagihanItem->tingkat }}">
-                                    @endif
-                                    <input type="number" name="jumlah" min="0" value="{{ $beban['masuk'] }}">
-                                    <button class="tombol">Koreksi {{ $tagihanItem->nama }}</button>
-                                </form>
-                            @endif
-                            <form class="baris" method="post" action="{{ route('tu.keringanan') }}">
-                                @csrf
-                                <input type="hidden" name="siswa_id" value="{{ $murid->id }}">
-                                <input type="hidden" name="tagihan_id" value="{{ $tagihanItem->id }}">
-                                <input type="number" name="jumlah" min="0" placeholder="Keringanan" value="{{ $beban['potong'] ?: '' }}">
-                                <input name="alasan" placeholder="Alasan">
-                                <button class="tombol">Simpan</button>
-                            </form>
+<section class="kisi-3">
+    <div class="kartu">
+        <form method="get" action="{{ route('tu.bayar') }}">
+            <label>Cari murid
+                <input name="q" value="{{ $cari }}" placeholder="Nama atau NIS, minimal 2 huruf" autofocus>
+            </label>
+            <button class="tombol utama" style="margin-top:12px">Cari</button>
+        </form>
+        @if(mb_strlen($cari) < 2)
+            <p class="redup">Ketik nama atau NIS. Daftar lengkap tidak ditampilkan.</p>
+        @elseif($hasil->isEmpty())
+            <p class="redup">Tidak ada murid yang cocok.</p>
+        @else
+            <div class="daftar" style="margin-top:12px">
+                @foreach($hasil as $murid)
+                    <a class="baris" href="{{ route('tu.bayar', ['q' => $cari, 'murid' => $murid->id]) }}">
+                        <span><strong>{{ $murid->nama }}</strong><br><span class="redup">{{ $murid->nis }} · {{ $murid->rombel->nama }}</span></span>
+                    </a>
+                @endforeach
+            </div>
+        @endif
+    </div>
+    <aside class="kartu">
+        @if($terpilih)
+            @php $tagihanMurid = Hitung::tagihanSiswa($terpilih); @endphp
+            <h2>{{ $terpilih->nama }}</h2>
+            <p class="redup">{{ $terpilih->nis }} · {{ $terpilih->rombel->nama }} · {{ Hitung::kode($terpilih->nis) }}</p>
+            @foreach($tagihanMurid as $item)
+                @php $beban = Hitung::beban($terpilih, $item); @endphp
+                <p class="baris"><span>{{ $item->nama }} · {{ Hitung::statusBayar($beban['harus'], $beban['masuk']) }}</span><strong>{{ Tampil::rupiah($beban['sisa']) }}</strong></p>
+            @endforeach
+            <form class="formulir" method="post" action="{{ route('tu.bayar.catat') }}" style="margin-top:12px">
+                @csrf
+                <input type="hidden" name="siswa_id" value="{{ $terpilih->id }}">
+                <label>Tagihan
+                    <select name="tagihan_id" required>
+                        @foreach($tagihanMurid as $item)
+                            <option value="{{ $item->id }}">{{ $item->nama }}</option>
                         @endforeach
-                    </details>
-                </td>
-                <td>
-                    <a class="tombol" href="{{ route('cetak.kartu', $murid) }}">Kartu</a>
-                    <a class="tombol" href="{{ route('cetak.gabungan', $murid) }}">Kwitansi</a>
-                </td>
-            </tr>
-        @endforeach
-        </tbody>
-    </table>
-</div>
+                    </select>
+                </label>
+                <label>Jumlah<input type="number" name="jumlah" min="1" required></label>
+                <label>Tanggal<input type="date" name="tanggal" required value="{{ now()->toDateString() }}"></label>
+                <label>Cara
+                    <select name="metode"><option value="tunai">Tunai</option><option value="transfer">Transfer</option></select>
+                </label>
+                <button class="tombol utama">Catat pembayaran</button>
+            </form>
+            <details style="margin-top:12px">
+                <summary>Koreksi dan keringanan</summary>
+                @foreach($tagihanMurid as $item)
+                    @php $beban = Hitung::beban($terpilih, $item); @endphp
+                    @if($beban['masuk'] > 0)
+                        <form class="formulir" method="post" action="{{ route('tu.koreksi') }}">
+                            @csrf
+                            <input type="hidden" name="siswa_id" value="{{ $terpilih->id }}">
+                            <input type="hidden" name="tagihan_id" value="{{ $item->id }}">
+                            <input name="nama" value="{{ $item->nama }}">
+                            <input type="number" name="nominal" min="0" value="{{ $item->nominal }}">
+                            @if($item->sasaran === 'tingkat')
+                                <select name="tingkat"><option value="semua" @selected($item->tingkat==='semua')>Semua</option>@foreach(['X','XI','XII'] as $t)<option @selected($item->tingkat===$t)>{{ $t }}</option>@endforeach</select>
+                            @else
+                                <input type="hidden" name="tingkat" value="{{ $item->tingkat }}">
+                            @endif
+                            <input type="number" name="jumlah" min="0" value="{{ $beban['masuk'] }}">
+                            <button class="tombol">Koreksi {{ $item->nama }}</button>
+                        </form>
+                    @endif
+                    <form class="baris" method="post" action="{{ route('tu.keringanan') }}">
+                        @csrf
+                        <input type="hidden" name="siswa_id" value="{{ $terpilih->id }}">
+                        <input type="hidden" name="tagihan_id" value="{{ $item->id }}">
+                        <input type="number" name="jumlah" min="0" placeholder="Keringanan" value="{{ $beban['potong'] ?: '' }}">
+                        <input name="alasan" placeholder="Alasan">
+                        <button class="tombol">Simpan</button>
+                    </form>
+                @endforeach
+            </details>
+            <p class="baris" style="margin-top:12px">
+                <a class="tombol" href="{{ route('cetak.kartu', $terpilih) }}">Kartu</a>
+                <a class="tombol" href="{{ route('cetak.gabungan', $terpilih) }}">Kwitansi</a>
+            </p>
+        @else
+            <p class="redup">Pilih satu murid dari hasil pencarian untuk mencatat pembayaran.</p>
+        @endif
+    </aside>
+</section>
 @endsection

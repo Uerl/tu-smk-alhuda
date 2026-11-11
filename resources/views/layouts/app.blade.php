@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $judul ?? 'Tata Usaha SMK Al Huda' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/tu.css?v=5">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/tu.css?v=6">
 </head>
 <body>
 @auth
@@ -50,6 +50,25 @@
         </main>
     </div>
 </div>
+@if($peran !== 'murid')
+<nav class="bawah no-cetak">
+    <a href="{{ route('tu.dasbor') }}" @class(['aktif' => request()->routeIs('tu.dasbor')])>Dasbor</a>
+    <a href="{{ route('tu.bayar') }}" @class(['aktif' => request()->routeIs('tu.bayar')])>Kasir</a>
+    <a href="{{ route('tu.tunggakan') }}" @class(['aktif' => request()->routeIs('tu.tunggakan')])>Tunggakan</a>
+    <a href="{{ route('tu.tagihan') }}" @class(['aktif' => request()->routeIs('tu.tagihan')])>Tagihan</a>
+    <details>
+        <summary>Lainnya</summary>
+        <div class="lembar">
+            <a href="{{ route('tu.kas') }}">Kas</a>
+            <a href="{{ route('tu.cocok') }}">Cocokkan</a>
+            <a href="{{ route('tu.laporan') }}">Laporan</a>
+            <a href="{{ route('tu.rombel') }}">Rombel</a>
+            <a href="{{ route('tu.administrasi') }}">Administrasi</a>
+            @if($peran === 'admin')<a href="{{ route('admin') }}">Admin</a>@endif
+        </div>
+    </details>
+</nav>
+@endif
 @else
 <main class="masuk-layar">
     @yield('isi')

@@ -1,6 +1,12 @@
 @extends('layouts.app', ['judul' => 'Tunggakan'])
 @section('isi')
 @php use App\Tu\Tampil; @endphp
+<div class="keping">
+    <a href="{{ route('tu.tunggakan') }}" @class(['aktif' => $saringan === ''])>Semua</a>
+    @foreach(['TKJ','TKR','TPM','TSM','TITL','PF'] as $nama)
+        <a href="{{ route('tu.tunggakan', ['jurusan' => $nama]) }}" @class(['aktif' => $saringan === $nama])>{{ $nama }}</a>
+    @endforeach
+</div>
 <section class="kartu" style="margin-bottom:14px">
     <h2>Jatuh tempo 7 hari</h2>
     <div class="daftar">

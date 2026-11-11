@@ -61,9 +61,6 @@ class StafController extends Controller
             'lewat' => $lewat,
             'tingkat' => $tingkat,
             'jurusan' => $jurusan,
-            'pengumuman' => Pengumuman::query()->where('aktif', true)->latest('id')->first(),
-            'pegawai' => Pegawai::query()->orderBy('urutan')->get(),
-            'petugas' => session('petugas_user_id'),
         ]);
     }
 
@@ -84,12 +81,20 @@ class StafController extends Controller
         return back();
     }
 
-    public function tunggakan()
+    public function tunggakan(Request $request)
     {
+        $saringan = $request->string('jurusan')->toString();
+        $kenal = ['TKJ', 'TKR', 'TPM', 'TSM', 'TITL', 'PF'];
+        if (! in_array($saringan, $kenal, true)) {
+            $saringan = '';
+        }
         $baris = [];
         $segera = [];
         $batas = now()->addDays(7)->toDateString();
         foreach (Hitung::siswaSiap() as $murid) {
+            if ($saringan !== '' && $murid->rombel->jurusan !== $saringan) {
+                continue;
+            }
             $sisa = 0;
             foreach (Hitung::tagihanSiswa($murid) as $tagihan) {
                 $beban = Hitung::beban($murid, $tagihan);
@@ -108,7 +113,7 @@ class StafController extends Controller
         }
         usort($baris, fn ($a, $b) => $b['sisa'] <=> $a['sisa']);
 
-        return view('tu.tunggakan', compact('baris', 'segera'));
+        return view('tu.tunggakan', compact('baris', 'segera', 'saringan'));
     }
 
     public function janji(Request $request)
@@ -155,6 +160,9 @@ class StafController extends Controller
             'tutup' => TutupKas::query()->orderByDesc('tanggal')->get(),
             'setor' => SetorBank::query()->latest('id')->get(),
             'laci' => $laci,
+            'pengumuman' => Pengumuman::query()->where('aktif', true)->latest('id')->first(),
+            'pegawai' => Pegawai::query()->orderBy('urutan')->get(),
+            'petugas' => session('petugas_user_id'),
         ]);
     }
 
@@ -321,12 +329,26 @@ class StafController extends Controller
         return view('tu.rombel', compact('rombel'));
     }
 
-    public function tagihan()
+    public function tagihan(Request $request)
     {
+        $cari = trim(str_replace(['%', '_'], '', $request->string('q')->toString()));
+        $calon = collect();
+        if (mb_strlen($cari) >= 2) {
+            $calon = Siswa::query()
+                ->with('rombel')
+                ->where(function ($query) use ($cari) {
+                    $query->where('nama', 'like', '%'.$cari.'%')->orWhere('nis', 'like', '%'.$cari.'%');
+                })
+                ->orderBy('nama')
+                ->limit(8)
+                ->get();
+        }
+
         return view('tu.tagihan', [
             'tagihan' => Tagihan::query()->with(['rombel'])->latest('id')->get(),
             'rombel' => Rombel::query()->orderBy('nama')->get(),
-            'siswa' => Siswa::query()->orderBy('nama')->get(),
+            'calon' => $calon,
+            'cari' => $cari,
             'tahun' => TahunPelajaran::query()->where('aktif', true)->first(),
         ]);
     }
@@ -343,6 +365,12 @@ class StafController extends Controller
             'siswa_id' => 'nullable|exists:siswa,id',
         ]);
         $tahun = TahunPelajaran::query()->where('aktif', true)->firstOrFail();
+        if ($data['sasaran'] === 'siswa' && empty($data['siswa_id'])) {
+            return back()->with('galat', 'Cari dan pilih murid terlebih dahulu.');
+        }
+        if ($data['sasaran'] === 'rombel' && empty($data['rombel_id'])) {
+            return back()->with('galat', 'Pilih rombel.');
+        }
         Tagihan::query()->create([
             'tahun_pelajaran_id' => $tahun->id,
             'nama' => $data['nama'],
@@ -375,22 +403,27 @@ class StafController extends Controller
 
     public function bayar(Request $request)
     {
-        $siswa = Hitung::siswaSiap();
-        if ($request->filled('tingkat')) {
-            $tingkat = $request->string('tingkat')->toString();
-            $siswa = $siswa->filter(fn ($murid) => $murid->rombel->tingkat === $tingkat);
+        $cari = trim(str_replace(['%', '_'], '', $request->string('q')->toString()));
+        $hasil = collect();
+        if (mb_strlen($cari) >= 2) {
+            $hasil = Siswa::query()
+                ->with('rombel')
+                ->where(function ($query) use ($cari) {
+                    $query->where('nama', 'like', '%'.$cari.'%')->orWhere('nis', 'like', '%'.$cari.'%');
+                })
+                ->orderBy('nama')
+                ->limit(8)
+                ->get();
         }
-        if ($request->filled('rombel')) {
-            $siswa = $siswa->where('rombel_id', (int) $request->string('rombel'));
-        }
-        if ($request->filled('bk')) {
-            $siswa = $siswa->filter(fn ($murid) => $murid->rombel->bk?->nama === $request->string('bk')->toString());
+        $terpilih = null;
+        if ($request->filled('murid')) {
+            $terpilih = Siswa::query()->with(['rombel', 'keringanan', 'pembayaran'])->find($request->integer('murid'));
         }
 
         return view('tu.bayar', [
-            'siswa' => $siswa,
-            'semua' => Hitung::siswaSiap(),
-            'rombel' => Rombel::query()->with('bk')->orderBy('nama')->get(),
+            'cari' => $cari,
+            'hasil' => $hasil,
+            'terpilih' => $terpilih,
             'pengajuan' => Pengajuan::query()->with(['siswa.rombel', 'tagihan'])->where('status', 'menunggu')->latest('id')->get(),
             'tagihan' => Tagihan::query()->orderBy('nama')->get(),
         ]);

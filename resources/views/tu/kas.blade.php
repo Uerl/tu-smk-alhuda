@@ -57,4 +57,23 @@
         </form>
     </div>
 </div>
+<details class="kartu">
+    <summary>Pengumuman murid dan petugas kwitansi</summary>
+    <form class="formulir" method="post" action="{{ route('tu.pengumuman') }}" style="margin-top:12px">
+        @csrf
+        <input name="judul" required value="{{ $pengumuman->judul ?? '' }}" placeholder="Judul">
+        <textarea name="isi" required placeholder="Isi pengumuman">{{ $pengumuman->isi ?? '' }}</textarea>
+        <button class="tombol utama">Simpan pengumuman</button>
+    </form>
+    <form class="formulir" method="post" action="{{ route('tu.petugas') }}" style="margin-top:12px">
+        @csrf
+        <label>Nama di kwitansi baru
+            <select name="petugas_id" onchange="this.form.submit()">
+                @foreach($pegawai->whereNotNull('user_id') as $orang)
+                    <option value="{{ $orang->user_id }}" @selected((int) $petugas === (int) $orang->user_id || (! $petugas && $orang->jabatan_tu === 'bendahara'))>{{ $orang->nama }}</option>
+                @endforeach
+            </select>
+        </label>
+    </form>
+</details>
 @endsection
