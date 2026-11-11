@@ -17,7 +17,12 @@
         <nav class="menu">
             @if($peran === 'admin')<a href="{{ route('admin') }}" @class(['aktif' => request()->is('admin')])>Admin</a>@endif
             @if($peran !== 'murid')
-                @foreach(['tu.dasbor'=>'Dasbor','tu.tunggakan'=>'Tunggakan','tu.kas'=>'Kas','tu.cocok'=>'Cocokkan','tu.laporan'=>'Laporan','tu.rombel'=>'Rombel','tu.tagihan'=>'Tagihan','tu.bayar'=>'Pembayaran','tu.administrasi'=>'Administrasi'] as $rute => $label)
+                <p class="kelompok">Kasir</p>
+                @foreach(['tu.dasbor'=>'Dasbor','tu.bayar'=>'Pembayaran','tu.tunggakan'=>'Tunggakan','tu.kas'=>'Kas','tu.cocok'=>'Cocokkan'] as $rute => $label)
+                    <a href="{{ route($rute) }}" @class(['aktif' => request()->routeIs($rute)])>{{ $label }}</a>
+                @endforeach
+                <p class="kelompok">Data</p>
+                @foreach(['tu.laporan'=>'Laporan','tu.rombel'=>'Rombel','tu.tagihan'=>'Tagihan','tu.administrasi'=>'Administrasi'] as $rute => $label)
                     <a href="{{ route($rute) }}" @class(['aktif' => request()->routeIs($rute)])>{{ $label }}</a>
                 @endforeach
             @else

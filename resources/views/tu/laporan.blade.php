@@ -1,23 +1,47 @@
 @extends('layouts.app', ['judul' => 'Laporan'])
 @section('isi')
 @php use App\Tu\Tampil; @endphp
-<div class="baris"><h2>Laporan walikelas</h2><a class="tombol utama" href="{{ route('tu.tunggakan.csv') }}">Unduh tunggakan</a></div>
-<div class="daftar" style="margin-top:12px">
-    @foreach($wali as $nama => $item)
-        <article class="kartu"><strong>{{ $nama }}</strong><p class="redup">{{ implode(', ', array_keys($item['kelas'])) }} · {{ $item['siswa'] }} siswa</p><p>Sisa {{ Tampil::rupiah($item['sisa']) }} · {{ $item['lewat'] }} tagihan lewat tempo</p></article>
-    @endforeach
+<div class="baris">
+    <h2>Umur piutang</h2>
+    <a class="tombol utama" href="{{ route('tu.tunggakan.csv') }}">Unduh tunggakan</a>
 </div>
-<h2 style="margin-top:16px">Rekap jurusan</h2>
-<div class="daftar">
-    @foreach($jurusan as $nama => $item)
-        <article class="kartu"><strong>{{ $nama }}</strong><p class="redup">{{ implode(', ', array_keys($item['kelas'])) }} · {{ $item['siswa'] }} siswa</p><p>Sisa {{ Tampil::rupiah($item['sisa']) }} · {{ $item['ditahan'] }} murid ditahan</p></article>
-    @endforeach
-</div>
-<h2 style="margin-top:16px">Umur piutang</h2>
 <section class="kisi">
-    <article class="kartu"><p class="redup">Belum jatuh tempo</p><strong>{{ Tampil::rupiah($umur['belum']) }}</strong></article>
-    <article class="kartu"><p class="redup">Lewat 1–7 hari</p><strong>{{ Tampil::rupiah($umur['seminggu']) }}</strong></article>
-    <article class="kartu"><p class="redup">Lewat 8–30 hari</p><strong>{{ Tampil::rupiah($umur['sebulan']) }}</strong></article>
-    <article class="kartu"><p class="redup">Lewat lebih 30 hari</p><strong>{{ Tampil::rupiah($umur['lama']) }}</strong></article>
+    <article class="kartu"><p class="redup">Belum jatuh tempo</p><p class="angka">{{ Tampil::rupiah($umur['belum']) }}</p></article>
+    <article class="kartu"><p class="redup">Lewat 1–7 hari</p><p class="angka">{{ Tampil::rupiah($umur['seminggu']) }}</p></article>
+    <article class="kartu"><p class="redup">Lewat 8–30 hari</p><p class="angka">{{ Tampil::rupiah($umur['sebulan']) }}</p></article>
+    <article class="kartu"><p class="redup">Lewat lebih 30 hari</p><p class="angka">{{ Tampil::rupiah($umur['lama']) }}</p></article>
 </section>
+<div class="kisi-3">
+    <section class="tabel-bungkus">
+        <table>
+            <thead><tr><th>Walikelas</th><th>Kelas</th><th>Murid</th><th>Sisa</th><th>Lewat</th></tr></thead>
+            <tbody>
+            @foreach($wali as $nama => $item)
+                <tr>
+                    <td><strong>{{ $nama }}</strong></td>
+                    <td>{{ implode(', ', array_keys($item['kelas'])) }}</td>
+                    <td>{{ $item['siswa'] }}</td>
+                    <td>{{ Tampil::rupiah($item['sisa']) }}</td>
+                    <td>{{ $item['lewat'] }}</td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+    </section>
+    <section class="tabel-bungkus">
+        <table>
+            <thead><tr><th>Jurusan</th><th>Murid</th><th>Sisa</th><th>Ditahan</th></tr></thead>
+            <tbody>
+            @foreach($jurusan as $nama => $item)
+                <tr>
+                    <td><strong>{{ $nama }}</strong></td>
+                    <td>{{ $item['siswa'] }}</td>
+                    <td>{{ Tampil::rupiah($item['sisa']) }}</td>
+                    <td>{{ $item['ditahan'] }}</td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+    </section>
+</div>
 @endsection
