@@ -1,0 +1,55 @@
+Tata Usaha SMK Al Huda Kota Kediri
+Ambil dari GitHub, jangan menimpa PPDB di /var/www/ppdb.
+
+Database baru: tu_alhuda
+Port Nginx: 8092
+PPDB tetap di port 8091.
+
+1. Buat database dan pengguna MariaDB:
+
+   sudo mysql
+   CREATE DATABASE tu_alhuda CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE USER 'tu_alhuda'@'localhost' IDENTIFIED BY 'sandi-yang-dipilih';
+   GRANT ALL ON tu_alhuda.* TO 'tu_alhuda'@'localhost';
+   FLUSH PRIVILEGES;
+   EXIT;
+
+2. Ambil kode:
+
+   sudo mkdir -p /var/www/tu
+   sudo chown admsmk:admsmk /var/www/tu
+   cd /var/www/tu
+   git clone https://github.com/Uerl/tu-smk-alhuda.git tu-laravel
+   sudo chown -R admsmk:admsmk /var/www/tu
+
+3. Sebagai admsmk:
+
+   cd /var/www/tu/tu-laravel
+   composer install --no-dev --optimize-autoloader
+   cp .env.example .env
+   php artisan key:generate
+
+4. Edit .env:
+   DB_DATABASE=tu_alhuda
+   DB_USERNAME=tu_alhuda
+   DB_PASSWORD=sandi-yang-dipilih
+   APP_URL=http://192.168.125.245:8092
+
+5. Masih sebagai admsmk:
+
+   php artisan migrate --force
+   php artisan db:seed --force
+   php artisan storage:link
+
+6. Sebagai root, pasang Nginx:
+
+   sudo bash pasang.sh
+
+Seed hanya dijalankan sekali, saat tabel tahun pelajaran masih kosong.
+Isinya data contoh. Ganti sandi sesudah dicoba.
+
+Admin      admin        Tu12345
+Bendahara  bendahara    Tu12345
+Murid      20240011     Murid123
+
+Sesudah halaman terbuka, ubah APP_DEBUG=false di .env.
