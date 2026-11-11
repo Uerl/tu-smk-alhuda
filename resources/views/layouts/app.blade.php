@@ -6,14 +6,18 @@
     <title>{{ $judul ?? 'Tata Usaha SMK Al Huda' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/tu.css">
+    <link rel="stylesheet" href="/tu.css?v=4">
 </head>
 <body>
 @auth
-@php $peran = auth()->user()->peran; @endphp
+@php
+    $peran = auth()->user()->peran;
+    $peranLabel = ['admin' => 'Admin', 'staf' => 'Staf TU', 'murid' => 'Murid'][$peran] ?? 'Pengguna';
+    $inisial = collect(preg_split('/\s+/', auth()->user()->name))->filter()->take(2)->map(fn ($kata) => mb_substr($kata, 0, 1))->implode('');
+@endphp
 <div class="app">
     <aside class="rel no-cetak">
-        <div class="merek"><small>SMK Al Huda</small><strong>Tata Usaha</strong></div>
+        <div class="merek"><span class="cap">TU</span><div><small>SMK Al Huda</small><strong>Tata Usaha</strong></div></div>
         <nav class="menu">
             @if($peran === 'admin')<a href="{{ route('admin') }}" @class(['aktif' => request()->is('admin')])>Admin</a>@endif
             @if($peran !== 'murid')
@@ -32,11 +36,12 @@
     </aside>
     <div class="kolom">
         <header class="kepala no-cetak">
-            <div>
-                <p>{{ auth()->user()->name }}</p>
-                <h1>{{ $judul ?? 'Pembayaran' }}</h1>
+            <h1>{{ $judul ?? 'Pembayaran' }}</h1>
+            <div class="akun-bar">
+                <span class="inisial">{{ $inisial }}</span>
+                <p>{{ auth()->user()->name }}<span>{{ $peranLabel }}</span></p>
+                <form method="post" action="{{ route('keluar') }}">@csrf<button class="keluar">Keluar</button></form>
             </div>
-            <form method="post" action="{{ route('keluar') }}">@csrf<button class="keluar">Keluar</button></form>
         </header>
         <main class="isi">
             @if(session('kabar'))<p class="kabar no-cetak">{{ session('kabar') }}</p>@endif

@@ -25,15 +25,20 @@
     </label>
     <button class="tombol utama">Simpan tagihan</button>
 </form>
-<div class="daftar" style="margin-top:12px">
-    @foreach($tagihan as $item)
-        <article class="kartu baris">
-            <div>
-                <strong>{{ $item->nama }}</strong>
-                <p class="redup">{{ Tampil::rupiah($item->nominal) }} · tempo {{ Tampil::tanggal($item->tempo->toDateString()) }} · {{ $item->sasaran }} {{ $item->tingkat }} {{ $item->rombel->nama ?? '' }}</p>
-            </div>
-            <form method="post" action="{{ route('tu.tagihan.bulan', $item) }}">@csrf<button class="tombol">Bulan depan</button></form>
-        </article>
-    @endforeach
+<div class="tabel-bungkus">
+    <table>
+        <thead><tr><th>Tagihan</th><th>Nominal</th><th>Tempo</th><th>Sasaran</th><th></th></tr></thead>
+        <tbody>
+        @foreach($tagihan as $item)
+            <tr>
+                <td><strong>{{ $item->nama }}</strong></td>
+                <td>{{ Tampil::rupiah($item->nominal) }}</td>
+                <td>{{ Tampil::tanggal($item->tempo->toDateString()) }}</td>
+                <td>{{ $item->sasaran }} {{ $item->tingkat }} {{ $item->rombel->nama ?? '' }}</td>
+                <td><form method="post" action="{{ route('tu.tagihan.bulan', $item) }}">@csrf<button class="tombol">Bulan depan</button></form></td>
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
 </div>
 @endsection

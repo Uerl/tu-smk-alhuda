@@ -1,17 +1,19 @@
 @extends('layouts.app', ['judul' => 'Halaman murid'])
 @section('isi')
 @php use App\Tu\Hitung; use App\Tu\Tampil; @endphp
-<section class="kartu">
-    <h2>{{ $siswa->nama }}</h2>
-    <p class="redup">{{ $siswa->nis }} · {{ $siswa->rombel->nama }} · Walikelas {{ $siswa->rombel->walikelas?->nama }} · BK {{ $siswa->rombel->bk?->nama }}</p>
-    <p>Kode bayar <strong>{{ Hitung::kode($siswa->nis) }}</strong></p>
+<section class="kartu baris">
+    <div>
+        <p class="redup">{{ $siswa->rombel->nama }} · Walikelas {{ $siswa->rombel->walikelas?->nama }} · BK {{ $siswa->rombel->bk?->nama }}</p>
+        <h2>{{ $siswa->nama }}</h2>
+        <p class="redup">NIS {{ $siswa->nis }} · Kode bayar {{ Hitung::kode($siswa->nis) }}</p>
+        @if($siswa->janji)<p class="redup">Janji bayar {{ Tampil::tanggal($siswa->janji->tanggal->toDateString()) }} · {{ $siswa->janji->catatan }}</p>@endif
+    </div>
     <span class="lencana {{ $status['status'] === 'Ditahan' ? 'buruk' : ($status['status'] === 'Dispensasi' ? 'tunggu' : '') }}">{{ $status['status'] }}</span>
-    @if($siswa->janji)<p>Janji bayar {{ Tampil::tanggal($siswa->janji->tanggal->toDateString()) }} · {{ $siswa->janji->catatan }}</p>@endif
 </section>
 @if($pengumuman)
     <section class="kartu" style="margin-top:12px"><p class="redup">Pengumuman · {{ Tampil::tanggal($pengumuman->tanggal->toDateString()) }}</p><h3>{{ $pengumuman->judul }}</h3><p>{{ $pengumuman->isi }}</p></section>
 @endif
-<div class="daftar" style="margin-top:12px">
+<div class="kisi-rombel">
     @foreach($tagihan as $item)
         @php $beban = Hitung::beban($siswa, $item); @endphp
         <article class="kartu">

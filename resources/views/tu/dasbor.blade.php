@@ -2,12 +2,12 @@
 @section('isi')
 @php use App\Tu\Tampil; @endphp
 <section class="kisi">
-    <article class="kartu"><p class="redup">Total tagihan</p><p class="angka">{{ Tampil::rupiah($harus) }}</p></article>
-    <article class="kartu"><p class="redup">Terkumpul</p><p class="angka">{{ Tampil::rupiah($masuk) }}</p></article>
-    <article class="kartu"><p class="redup">Sisa</p><p class="angka">{{ Tampil::rupiah($sisa) }}</p></article>
-    <article class="kartu"><p class="redup">Bukti menunggu</p><p class="angka">{{ $menunggu }}</p></article>
-    <article class="kartu"><p class="redup">Lewat tempo</p><p class="angka">{{ $lewat }}</p></article>
-    <article class="kartu"><p class="redup">Jurusan</p><p class="angka">{{ count($jurusan) }}</p></article>
+    <article class="kartu stat"><p class="redup">Total tagihan</p><p class="angka">{{ Tampil::rupiah($harus) }}</p></article>
+    <article class="kartu stat emas"><p class="redup">Terkumpul</p><p class="angka">{{ Tampil::rupiah($masuk) }}</p></article>
+    <article class="kartu stat"><p class="redup">Sisa</p><p class="angka">{{ Tampil::rupiah($sisa) }}</p></article>
+    <article class="kartu stat"><p class="redup">Bukti menunggu</p><p class="angka">{{ $menunggu }}</p></article>
+    <article class="kartu stat merah"><p class="redup">Lewat tempo</p><p class="angka">{{ $lewat }}</p></article>
+    <article class="kartu stat"><p class="redup">Jurusan</p><p class="angka">{{ count($jurusan) }}</p></article>
 </section>
 <section class="kisi-3" style="margin-top:14px">
     <article class="kartu">
