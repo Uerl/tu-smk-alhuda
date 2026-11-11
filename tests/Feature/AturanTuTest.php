@@ -42,6 +42,9 @@ class AturanTuTest extends TestCase
         $paket = BacaPresensi::dariHtml('<table><tr><th>NIS</th><th>Nama</th><th>Kelas</th></tr><tr><td>24001</td><td>Ani</td><td>X TKJ 1</td></tr></table><table><tr><th>Kelas</th><th>Wali Kelas</th><th>Guru BK</th></tr><tr><td>X TKJ 1</td><td>Siti Aminah</td><td>Nur Aini</td></tr></table>');
         $this->assertSame('Ani', $paket['siswa']['24001']['nama']);
         $this->assertSame('Siti Aminah', $paket['rombel']['X TKJ 1']['walikelas']);
+        $panjang = BacaPresensi::kelas('TITL-1', 'X', 'Teknik Instalasi Tenaga Listrik');
+        $this->assertSame('X TITL 1', $panjang['nama']);
+        $this->assertSame('TITL', $panjang['jurusan']);
 
         SumberPresensi::kosongkanAkademik();
         $this->assertSame(0, Siswa::query()->count());

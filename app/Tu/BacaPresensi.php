@@ -81,7 +81,7 @@ class BacaPresensi
         }
         if (isset($rekam['kelas']) && (isset($rekam['walikelas']) || isset($rekam['bk']))) {
             $kelas = self::kelas($rekam['kelas'], $rekam['tingkat'] ?? '', $rekam['jurusan'] ?? '');
-            $paket['rombel'][$kelas['nama']] = array_merge($kelas, array_filter([
+            $paket['rombel'][$kelas['nama']] = array_merge($paket['rombel'][$kelas['nama']] ?? [], $kelas, array_filter([
                 'walikelas' => $rekam['walikelas'] ?? null,
                 'bk' => $rekam['bk'] ?? null,
             ]));
@@ -111,18 +111,65 @@ class BacaPresensi
     public static function kelas(string $nama, string $tingkat = '', string $jurusan = ''): array
     {
         $nama = trim($nama);
+        $tingkat = strtoupper(trim($tingkat));
+        $kode = self::kodeJurusan($jurusan);
         if (preg_match('/^(X|XI|XII)\s*[-.]?\s*([A-Za-z]+)\s*[-.]?\s*(\d+)/u', $nama, $cocok)) {
             $tingkat = strtoupper($cocok[1]);
-            $jurusan = strtoupper($cocok[2]);
-            $nama = $tingkat.' '.$jurusan.' '.$cocok[3];
+            $kode = strtoupper($cocok[2]);
+            $nama = $tingkat.' '.$kode.' '.$cocok[3];
+        } elseif (preg_match('/^([A-Za-z]+)\s*[-.]?\s*(\d+)$/u', $nama, $cocok)) {
+            $kode = strtoupper($cocok[1]);
+            if ($tingkat !== '') {
+                $nama = $tingkat.' '.$kode.' '.$cocok[2];
+            }
         }
-        $tingkat = strtoupper($tingkat ?: 'X');
-        $jurusan = strtoupper($jurusan ?: 'UMUM');
+        if ($kode === '') {
+            $kode = 'UMUM';
+        }
+        if ($tingkat === '') {
+            $tingkat = 'X';
+        }
         if ($nama === '') {
-            $nama = trim($tingkat.' '.$jurusan);
+            $nama = trim($tingkat.' '.$kode);
         }
 
-        return ['nama' => $nama, 'tingkat' => $tingkat, 'jurusan' => $jurusan];
+        return ['nama' => $nama, 'tingkat' => $tingkat, 'jurusan' => $kode];
+    }
+
+    private static function kodeJurusan(string $jurusan): string
+    {
+        $jurusan = strtoupper(trim($jurusan));
+        $peta = [
+            'TEKNIK INSTALASI TENAGA LISTRIK' => 'TITL',
+            'TEKNIK KOMPUTER DAN JARINGAN' => 'TKJ',
+            'TEKNIK KENDARAAN RINGAN' => 'TKR',
+            'TEKNIK SEPEDA MOTOR' => 'TSM',
+            'TEKNIK DAN BISNIS SEPEDA MOTOR' => 'TBSM',
+            'TEKNIK PEMESINAN' => 'TPM',
+            'TEKNIK PENGELASAN' => 'TPL',
+            'PRODUKSI FILM' => 'PF',
+            'DESAIN KOMUNIKASI VISUAL' => 'DKV',
+            'AKUNTANSI DAN KEUANGAN LEMBAGA' => 'AKL',
+            'PERHOTELAN' => 'PH',
+        ];
+        if (isset($peta[$jurusan])) {
+            return $peta[$jurusan];
+        }
+        if (preg_match('/^[A-Z]{2,8}$/', $jurusan)) {
+            return $jurusan;
+        }
+        if ($jurusan === '') {
+            return '';
+        }
+        $inisial = '';
+        foreach (preg_split('/\s+/', $jurusan) as $kata) {
+            if (in_array($kata, ['DAN', 'DI', 'KE', 'YANG', 'TENAGA'], true)) {
+                continue;
+            }
+            $inisial .= mb_substr($kata, 0, 1);
+        }
+
+        return $inisial !== '' ? $inisial : mb_substr($jurusan, 0, 20);
     }
 
     private static function bagian(string $jabatan): string
