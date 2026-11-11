@@ -11,34 +11,64 @@ use Illuminate\Support\Facades\Hash;
 
 class SumberPresensi
 {
+    public static function jurusan(): array
+    {
+        return ['TKJ', 'TKR', 'TPM', 'TSM', 'TITL', 'PF'];
+    }
+
     public static function rombel(): array
     {
-        return [
-            ['nama' => 'X TKJ 1', 'tingkat' => 'X', 'jurusan' => 'TKJ', 'walikelas' => 'Siti Aminah', 'bk' => 'Nur Aini'],
-            ['nama' => 'X TKR 1', 'tingkat' => 'X', 'jurusan' => 'TKR', 'walikelas' => 'Budi Hartono', 'bk' => 'Nur Aini'],
-            ['nama' => 'X TITL 1', 'tingkat' => 'X', 'jurusan' => 'TITL', 'walikelas' => 'Rina Safitri', 'bk' => 'Nur Aini'],
-            ['nama' => 'XI TKJ 1', 'tingkat' => 'XI', 'jurusan' => 'TKJ', 'walikelas' => 'Sari Wulandari', 'bk' => 'Dedi Pratama'],
-            ['nama' => 'XI TSM 1', 'tingkat' => 'XI', 'jurusan' => 'TSM', 'walikelas' => 'Agus Wijaya', 'bk' => 'Dedi Pratama'],
-            ['nama' => 'XI TKR 2', 'tingkat' => 'XI', 'jurusan' => 'TKR', 'walikelas' => 'Lilis Handayani', 'bk' => 'Dedi Pratama'],
-            ['nama' => 'XII PF 1', 'tingkat' => 'XII', 'jurusan' => 'PF', 'walikelas' => 'Maya Putri', 'bk' => 'Hendra Kusuma'],
-            ['nama' => 'XII TPM 1', 'tingkat' => 'XII', 'jurusan' => 'TPM', 'walikelas' => 'Joko Santoso', 'bk' => 'Hendra Kusuma'],
-        ];
+        $guru = ['Siti Aminah', 'Budi Hartono', 'Rina Safitri', 'Sari Wulandari', 'Agus Wijaya', 'Lilis Handayani', 'Maya Putri', 'Joko Santoso'];
+        $bk = ['Nur Aini', 'Dedi Pratama', 'Hendra Kusuma'];
+        $hasil = [];
+        $urut = 0;
+        foreach (['X', 'XI', 'XII'] as $tingkat) {
+            foreach (self::jurusan() as $jurusan) {
+                foreach ([1, 2] as $nomor) {
+                    $hasil[] = [
+                        'nama' => $tingkat.' '.$jurusan.' '.$nomor,
+                        'tingkat' => $tingkat,
+                        'jurusan' => $jurusan,
+                        'walikelas' => $guru[$urut % count($guru)],
+                        'bk' => $bk[$urut % count($bk)],
+                    ];
+                    $urut++;
+                }
+            }
+        }
+
+        return $hasil;
     }
 
     public static function siswa(): array
     {
-        return [
-            ['nis' => '20240011', 'nama' => 'Siti Rahmawati', 'rombel' => 'X TKJ 1'],
-            ['nis' => '20240018', 'nama' => 'Budi Santoso', 'rombel' => 'X TKR 1'],
-            ['nis' => '20240027', 'nama' => 'Gilang Wulandari', 'rombel' => 'X TITL 1'],
-            ['nis' => '20230102', 'nama' => 'Citra Hartono', 'rombel' => 'XI TKJ 1'],
-            ['nis' => '20230115', 'nama' => 'Dian Permata', 'rombel' => 'XI TSM 1'],
-            ['nis' => '20230133', 'nama' => 'Hana Setiawan', 'rombel' => 'XI TKR 2'],
-            ['nis' => '20220007', 'nama' => 'Eka Kusuma', 'rombel' => 'XII PF 1'],
-            ['nis' => '20220021', 'nama' => 'Farah Pratama', 'rombel' => 'XII TPM 1'],
-            ['nis' => '20240044', 'nama' => 'Indra Mahendra', 'rombel' => 'X TKJ 1'],
-            ['nis' => '20230150', 'nama' => 'Kirana Aulia', 'rombel' => 'XI TKJ 1'],
-        ];
+        $wanita = ['Siti', 'Ayu', 'Citra', 'Dewi', 'Eka', 'Farah', 'Gilang', 'Hana', 'Intan', 'Kirana', 'Laras', 'Maya', 'Nisa', 'Putri', 'Rani'];
+        $pria = ['Budi', 'Andi', 'Cahyo', 'Dimas', 'Fajar', 'Galang', 'Hendra', 'Ilham', 'Joko', 'Rizky', 'Teguh', 'Wahyu', 'Yoga', 'Zaki', 'Arif'];
+        $belakang = ['Rahmawati', 'Santoso', 'Saputra', 'Wijaya', 'Pratama', 'Kusuma', 'Handayani', 'Permata', 'Setiawan', 'Aulia', 'Mahendra', 'Lestari', 'Nugroho', 'Wulandari', 'Hartono'];
+        $hasil = [];
+        $terpakai = [];
+        $hitung = ['X' => 10, 'XI' => 10, 'XII' => 10];
+        foreach (self::rombel() as $indeks => $kelas) {
+            $tahun = $kelas['tingkat'] === 'X' ? '2024' : ($kelas['tingkat'] === 'XI' ? '2023' : '2022');
+            for ($n = 1; $n <= 15; $n++) {
+                $hitung[$kelas['tingkat']]++;
+                $nis = $tahun.str_pad((string) $hitung[$kelas['tingkat']], 4, '0', STR_PAD_LEFT);
+                $perempuan = $n % 2 === 1;
+                if ($nis === '20240011') {
+                    $nama = 'Siti Rahmawati';
+                } else {
+                    $depan = $perempuan ? $wanita[($n + $indeks) % count($wanita)] : $pria[($n + $indeks) % count($pria)];
+                    $nama = $depan.' '.$belakang[($n + $indeks * 2) % count($belakang)];
+                    if (isset($terpakai[$nama])) {
+                        $nama .= ' '.substr($nis, -3);
+                    }
+                }
+                $terpakai[$nama] = true;
+                $hasil[] = ['nis' => $nis, 'nama' => $nama, 'rombel' => $kelas['nama'], 'perempuan' => $perempuan || $nis === '20240011'];
+            }
+        }
+
+        return $hasil;
     }
 
     public static function pegawai(): array
@@ -90,6 +120,7 @@ class SumberPresensi
             );
         }
         $baru = 0;
+        $sandi = Hash::make('Murid123');
         foreach (self::siswa() as $murid) {
             $rombel = Rombel::query()->where('tahun_pelajaran_id', $tahun->id)->where('nama', $murid['rombel'])->first();
             if (! $rombel) {
@@ -104,7 +135,7 @@ class SumberPresensi
             $user = User::query()->create([
                 'name' => $murid['nama'],
                 'username' => $murid['nis'],
-                'password' => Hash::make('Murid123'),
+                'password' => $sandi,
                 'peran' => 'murid',
             ]);
             Siswa::query()->create(['user_id' => $user->id, 'nis' => $murid['nis'], 'nama' => $murid['nama'], 'rombel_id' => $rombel->id]);

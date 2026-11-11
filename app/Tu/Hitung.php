@@ -23,7 +23,10 @@ class Hitung
     public static function tagihanSiswa(Siswa $siswa): Collection
     {
         $rombel = $siswa->rombel;
-        $daftar = Tagihan::query()->where('tahun_pelajaran_id', $rombel->tahun_pelajaran_id)->get();
+        static $simpan = [];
+        $kunci = (int) $rombel->tahun_pelajaran_id;
+        $simpan[$kunci] ??= Tagihan::query()->where('tahun_pelajaran_id', $kunci)->get();
+        $daftar = $simpan[$kunci];
 
         return $daftar->filter(function (Tagihan $tagihan) use ($siswa, $rombel) {
             if ($tagihan->sasaran === 'siswa') {

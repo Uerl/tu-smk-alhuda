@@ -31,9 +31,13 @@ class StafController extends Controller
         $masuk = 0;
         $lewat = 0;
         $tingkat = [];
+        $jurusan = [];
         foreach ($siswa as $murid) {
             $kunci = $murid->rombel->tingkat;
+            $kunciJurusan = $murid->rombel->jurusan;
             $tingkat[$kunci] ??= ['harus' => 0, 'masuk' => 0];
+            $jurusan[$kunciJurusan] ??= ['harus' => 0, 'masuk' => 0, 'murid' => 0];
+            $jurusan[$kunciJurusan]['murid']++;
             foreach (Hitung::tagihanSiswa($murid) as $tagihan) {
                 $beban = Hitung::beban($murid, $tagihan);
                 $harus += $beban['harus'];
@@ -41,6 +45,8 @@ class StafController extends Controller
                 $masuk += $bayar;
                 $tingkat[$kunci]['harus'] += $beban['harus'];
                 $tingkat[$kunci]['masuk'] += $bayar;
+                $jurusan[$kunciJurusan]['harus'] += $beban['harus'];
+                $jurusan[$kunciJurusan]['masuk'] += $bayar;
                 if (Hitung::lewat($tagihan->tempo->toDateString(), $beban['sisa'])) {
                     $lewat++;
                 }
@@ -54,6 +60,7 @@ class StafController extends Controller
             'menunggu' => Pengajuan::query()->where('status', 'menunggu')->count(),
             'lewat' => $lewat,
             'tingkat' => $tingkat,
+            'jurusan' => $jurusan,
             'pengumuman' => Pengumuman::query()->where('aktif', true)->latest('id')->first(),
             'pegawai' => Pegawai::query()->orderBy('urutan')->get(),
             'petugas' => session('petugas_user_id'),

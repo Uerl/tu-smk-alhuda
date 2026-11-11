@@ -1,13 +1,24 @@
 @extends('layouts.app', ['judul' => 'Rombel'])
 @section('isi')
-<p class="redup">Isi rombel mengikuti tarikan admin. Staf tidak menambah kelas.</p>
-<div class="daftar" style="margin-top:12px">
-    @foreach($rombel as $kelas)
-        <article class="kartu">
-            <strong>{{ $kelas->nama }}</strong>
-            <p class="redup">Walikelas {{ $kelas->walikelas?->nama }} · BK {{ $kelas->bk?->nama }} · {{ $kelas->siswa->count() }} siswa</p>
-            @foreach($kelas->siswa as $murid)<p>{{ $murid->nis }} · {{ $murid->nama }}</p>@endforeach
-        </article>
-    @endforeach
-</div>
+<p class="redup">Enam jurusan, dua rombel tiap tingkat. Walikelas dan BK diatur dari halaman admin.</p>
+@foreach($rombel->groupBy('jurusan') as $nama => $daftar)
+    <section class="grup">
+        <h2>{{ $nama }}</h2>
+        <div class="kisi-rombel">
+            @foreach($daftar as $kelas)
+                <article class="kartu">
+                    <div class="baris">
+                        <strong>{{ $kelas->nama }}</strong>
+                        <span class="lencana">{{ $kelas->siswa->count() }} murid</span>
+                    </div>
+                    <p class="redup">Walikelas {{ $kelas->walikelas?->nama }}<br>BK {{ $kelas->bk?->nama }}</p>
+                    <details>
+                        <summary>Lihat nama</summary>
+                        @foreach($kelas->siswa as $murid)<p>{{ $murid->nis }} · {{ $murid->nama }}</p>@endforeach
+                    </details>
+                </article>
+            @endforeach
+        </div>
+    </section>
+@endforeach
 @endsection
