@@ -1,12 +1,12 @@
 @extends('layouts.app', ['judul' => 'Admin'])
 @section('isi')
-<section class="kartu baris">
-    <div>
-        <h2>Tarik dari presensi</h2>
-        <p class="redup">Jabatan TU yang sudah diatur tidak ditimpa. Pembayaran tidak dihapus. X TKJ 1 sengaja masih Ahmad Fauzi sampai ditarik ulang.</p>
+<section class="kartu">
+    <h2>Data dari presensi</h2>
+    <p class="redup">Angkatan, rombel, jurusan, murid, walikelas, dan BK diambil dari {{ config('presensi.url') }}. Akun tata usaha, rekening, dan tagihan tidak dihapus.</p>
+    <div class="baris">
+        <form method="post" action="{{ route('admin.kosongkan') }}">@csrf<button class="tombol">Kosongkan data contoh</button></form>
+        <form method="post" action="{{ route('admin.sinkron') }}">@csrf<button class="tombol utama">Sinkron dari presensi</button></form>
     </div>
-    <form method="post" action="{{ route('admin.pegawai') }}">@csrf<button class="tombol utama">Tarik pegawai</button></form>
-    <form method="post" action="{{ route('admin.murid') }}">@csrf<button class="tombol">Tarik murid</button></form>
 </section>
 <section class="tabel-bungkus" style="margin-top:14px">
     <table>

@@ -7,6 +7,7 @@ use App\Models\Rombel;
 use App\Models\Siswa;
 use App\Models\TahunPelajaran;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class SumberPresensi
@@ -143,5 +144,99 @@ class SumberPresensi
         }
 
         return $baru;
+    }
+
+    public static function kosongkanAkademik(): array
+    {
+        return DB::transaction(function () {
+            $murid = User::query()->where('peran', 'murid')->pluck('id');
+            $jumlahMurid = Siswa::query()->count();
+            $jumlahRombel = Rombel::query()->count();
+            Siswa::query()->delete();
+            User::query()->whereIn('id', $murid)->delete();
+            Rombel::query()->delete();
+            $guru = Pegawai::query()->whereNull('jabatan_tu')->count();
+            Pegawai::query()->whereNull('jabatan_tu')->delete();
+
+            return ['murid' => $jumlahMurid, 'rombel' => $jumlahRombel, 'guru' => $guru];
+        });
+    }
+
+    public static function sinkron(): string
+    {
+        $paket = KlienPresensi::ambil();
+
+        return DB::transaction(function () use ($paket) {
+            $tahun = TahunPelajaran::query()->where('aktif', true)->firstOrFail();
+            $urutan = (int) Pegawai::query()->max('urutan');
+            foreach ($paket['pegawai'] as $orang) {
+                $ada = Pegawai::query()->where('nip', $orang['nip'])->first();
+                if ($ada) {
+                    $ada->update(['nama' => $orang['nama'], 'bagian' => $orang['bagian']]);
+                    continue;
+                }
+                $urutan++;
+                Pegawai::query()->create([...$orang, 'urutan' => $urutan]);
+            }
+            foreach ($paket['rombel'] as $kelas) {
+                self::simpanRombel($tahun->id, $kelas);
+            }
+            $sandi = Hash::make('Murid123');
+            $baru = 0;
+            foreach ($paket['siswa'] as $murid) {
+                $pecah = BacaPresensi::kelas($murid['rombel']);
+                $rombel = Rombel::query()->where('tahun_pelajaran_id', $tahun->id)->where('nama', $pecah['nama'])->first();
+                if (! $rombel) {
+                    $rombel = self::simpanRombel($tahun->id, $pecah);
+                }
+                $siswa = Siswa::query()->where('nis', $murid['nis'])->first();
+                if ($siswa) {
+                    $siswa->update(['nama' => $murid['nama'], 'rombel_id' => $rombel->id]);
+                    $siswa->user?->update(['name' => $murid['nama']]);
+                    continue;
+                }
+                $user = User::query()->create([
+                    'name' => $murid['nama'],
+                    'username' => $murid['nis'],
+                    'password' => $sandi,
+                    'peran' => 'murid',
+                ]);
+                Siswa::query()->create(['user_id' => $user->id, 'nis' => $murid['nis'], 'nama' => $murid['nama'], 'rombel_id' => $rombel->id]);
+                $baru++;
+            }
+            $nis = array_keys($paket['siswa']);
+            $lama = Siswa::query()->whereNotIn('nis', $nis)->pluck('user_id');
+            Siswa::query()->whereNotIn('nis', $nis)->delete();
+            User::query()->whereIn('id', $lama)->delete();
+            $nama = Rombel::query()->where('tahun_pelajaran_id', $tahun->id)->pluck('nama', 'id');
+            foreach ($nama as $id => $label) {
+                if (! isset($paket['rombel'][$label]) && ! in_array($label, array_column($paket['siswa'], 'rombel'), true) && Siswa::query()->where('rombel_id', $id)->doesntExist()) {
+                    Rombel::query()->whereKey($id)->delete();
+                }
+            }
+            if ($paket['pegawai'] !== []) {
+                Pegawai::query()->whereNull('jabatan_tu')->whereNotIn('nip', array_keys($paket['pegawai']))->delete();
+            }
+
+            return 'Sinkron selesai. '.$baru.' murid baru, '.count($paket['siswa']).' murid, '.Rombel::query()->count().' rombel.';
+        });
+    }
+
+    private static function simpanRombel(int $tahunId, array $kelas): Rombel
+    {
+        $wali = isset($kelas['walikelas']) ? Pegawai::query()->where('nama', $kelas['walikelas'])->first() : null;
+        $bk = isset($kelas['bk']) ? Pegawai::query()->where('nama', $kelas['bk'])->first() : null;
+        $data = ['tingkat' => $kelas['tingkat'], 'jurusan' => $kelas['jurusan']];
+        if ($wali) {
+            $data['walikelas_id'] = $wali->id;
+        }
+        if ($bk) {
+            $data['bk_id'] = $bk->id;
+        }
+
+        return Rombel::query()->updateOrCreate(
+            ['tahun_pelajaran_id' => $tahunId, 'nama' => $kelas['nama']],
+            $data,
+        );
     }
 }

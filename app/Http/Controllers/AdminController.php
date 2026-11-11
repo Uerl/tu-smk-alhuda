@@ -21,20 +21,24 @@ class AdminController extends Controller
         ]);
     }
 
-    public function tarikPegawai()
+    public function kosongkan()
     {
-        $baru = SumberPresensi::tarikPegawai();
-        Riwayat::catat('tarik_pegawai', 'pegawai', null, $baru.' pegawai baru');
+        $hasil = SumberPresensi::kosongkanAkademik();
+        Riwayat::catat('kosongkan', 'siswa', null, $hasil['murid'].' murid dihapus');
 
-        return back()->with('kabar', 'Data guru dan karyawan ditarik. '.$baru.' data baru.');
+        return back()->with('kabar', 'Data contoh dihapus: '.$hasil['murid'].' murid, '.$hasil['rombel'].' rombel, '.$hasil['guru'].' guru dan BK. Akun TU, rekening, dan tagihan tetap.');
     }
 
-    public function tarikMurid()
+    public function sinkron()
     {
-        $baru = SumberPresensi::tarikMurid();
-        Riwayat::catat('tarik_murid', 'siswa', null, $baru.' murid baru');
+        try {
+            $kabar = SumberPresensi::sinkron();
+        } catch (\Throwable $e) {
+            return back()->with('galat', $e->getMessage());
+        }
+        Riwayat::catat('sinkron_presensi', 'siswa', null, $kabar);
 
-        return back()->with('kabar', 'Murid, walikelas, dan BK disinkronkan. '.$baru.' murid baru.');
+        return back()->with('kabar', $kabar);
     }
 
     public function jabatan(Request $request, Pegawai $pegawai)

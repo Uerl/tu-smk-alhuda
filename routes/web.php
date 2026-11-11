@@ -51,8 +51,8 @@ Route::middleware(['auth', 'peran:admin,staf'])->prefix('tu')->group(function ()
 
 Route::middleware(['auth', 'peran:admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin');
-    Route::post('/pegawai', [AdminController::class, 'tarikPegawai'])->name('admin.pegawai');
-    Route::post('/murid', [AdminController::class, 'tarikMurid'])->name('admin.murid');
+    Route::post('/kosongkan', [AdminController::class, 'kosongkan'])->name('admin.kosongkan');
+    Route::post('/sinkron', [AdminController::class, 'sinkron'])->name('admin.sinkron');
     Route::post('/jabatan/{pegawai}', [AdminController::class, 'jabatan'])->name('admin.jabatan');
     Route::post('/urutan/{pegawai}', [AdminController::class, 'urutan'])->name('admin.urutan');
     Route::post('/rombel/{rombel}', [AdminController::class, 'rombel'])->name('admin.rombel');

@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Rombel;
 use App\Models\Siswa;
 use App\Models\User;
+use App\Tu\BacaPresensi;
 use App\Tu\Hitung;
+use App\Tu\SumberPresensi;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -32,6 +35,18 @@ class AturanTuTest extends TestCase
     public function test_kewajiban_nol_berstatus_lunas(): void
     {
         $this->assertSame('Lunas', Hitung::statusBayar(0, 0));
+    }
+
+    public function test_tabel_presensi_terbaca_dan_data_contoh_bisa_dikosongkan(): void
+    {
+        $paket = BacaPresensi::dariHtml('<table><tr><th>NIS</th><th>Nama</th><th>Kelas</th></tr><tr><td>24001</td><td>Ani</td><td>X TKJ 1</td></tr></table><table><tr><th>Kelas</th><th>Wali Kelas</th><th>Guru BK</th></tr><tr><td>X TKJ 1</td><td>Siti Aminah</td><td>Nur Aini</td></tr></table>');
+        $this->assertSame('Ani', $paket['siswa']['24001']['nama']);
+        $this->assertSame('Siti Aminah', $paket['rombel']['X TKJ 1']['walikelas']);
+
+        SumberPresensi::kosongkanAkademik();
+        $this->assertSame(0, Siswa::query()->count());
+        $this->assertSame(0, Rombel::query()->count());
+        $this->assertNotNull(User::query()->where('username', 'bendahara')->first());
     }
 
     public function test_pembayaran_tidak_boleh_melebihi_sisa(): void
