@@ -2,7 +2,7 @@
 @section('isi')
 <section class="kartu masuk-kartu">
     <p class="redup">SMK Al Huda Kota Kediri</p>
-    <h2>Masuk Tata Usaha</h2>
+    <h2>Tata Usaha</h2>
     <form class="formulir" method="post" action="{{ route('masuk.kirim') }}">
         @csrf
         <label>Username atau NIS<input name="username" value="{{ old('username') }}" required autofocus></label>
