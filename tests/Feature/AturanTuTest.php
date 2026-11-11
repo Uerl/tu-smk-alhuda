@@ -45,6 +45,10 @@ class AturanTuTest extends TestCase
         $panjang = BacaPresensi::kelas('TITL-1', 'X', 'Teknik Instalasi Tenaga Listrik');
         $this->assertSame('X TITL 1', $panjang['nama']);
         $this->assertSame('TITL', $panjang['jurusan']);
+        $naik = BacaPresensi::kelas('XI-PF → XII-PF', 'XI → XII', '');
+        $this->assertSame('XII PF', $naik['nama']);
+        $this->assertSame('XII', $naik['tingkat']);
+        $this->assertSame('PF', $naik['jurusan']);
 
         SumberPresensi::kosongkanAkademik();
         $this->assertSame(0, Siswa::query()->count());

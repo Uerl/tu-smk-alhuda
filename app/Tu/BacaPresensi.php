@@ -110,30 +110,45 @@ class BacaPresensi
 
     public static function kelas(string $nama, string $tingkat = '', string $jurusan = ''): array
     {
-        $nama = trim($nama);
-        $tingkat = strtoupper(trim($tingkat));
-        $kode = self::kodeJurusan($jurusan);
-        if (preg_match('/^(X|XI|XII)\s*[-.]?\s*([A-Za-z]+)\s*[-.]?\s*(\d+)/u', $nama, $cocok)) {
-            $tingkat = strtoupper($cocok[1]);
+        $nama = self::sekarang($nama);
+        $tingkat = self::sekarang($tingkat);
+        $kode = self::kodeJurusan(self::sekarang($jurusan));
+        if (preg_match('/^(XII|XI|X)\s*[-.]?\s*([A-Za-z]+)(?:\s*[-.]?\s*(\d+))?$/u', $nama, $cocok)) {
+            $tingkat = $cocok[1];
             $kode = strtoupper($cocok[2]);
-            $nama = $tingkat.' '.$kode.' '.$cocok[3];
+            $nama = $tingkat.' '.$kode.(isset($cocok[3]) && $cocok[3] !== '' ? ' '.$cocok[3] : '');
         } elseif (preg_match('/^([A-Za-z]+)\s*[-.]?\s*(\d+)$/u', $nama, $cocok)) {
             $kode = strtoupper($cocok[1]);
-            if ($tingkat !== '') {
+            if (in_array($tingkat, ['X', 'XI', 'XII'], true)) {
                 $nama = $tingkat.' '.$kode.' '.$cocok[2];
             }
         }
+        if (! in_array($tingkat, ['X', 'XI', 'XII'], true)) {
+            $tingkat = 'X';
+        }
         if ($kode === '') {
             $kode = 'UMUM';
-        }
-        if ($tingkat === '') {
-            $tingkat = 'X';
         }
         if ($nama === '') {
             $nama = trim($tingkat.' '.$kode);
         }
 
-        return ['nama' => $nama, 'tingkat' => $tingkat, 'jurusan' => $kode];
+        return [
+            'nama' => mb_substr($nama, 0, 80),
+            'tingkat' => $tingkat,
+            'jurusan' => mb_substr($kode, 0, 20),
+        ];
+    }
+
+    private static function sekarang(string $teks): string
+    {
+        $teks = trim(preg_replace('/\s*(?:→|->|=>|—|–|>)\s*/u', '->', $teks) ?? '');
+        if (str_contains($teks, '->')) {
+            $bagian = array_values(array_filter(array_map('trim', explode('->', $teks))));
+            $teks = $bagian === [] ? '' : (string) end($bagian);
+        }
+
+        return strtoupper($teks);
     }
 
     private static function kodeJurusan(string $jurusan): string
