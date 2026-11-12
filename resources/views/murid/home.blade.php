@@ -16,6 +16,9 @@
     </div>
     <p>Sisa seluruh tagihan <strong>{{ Tampil::rupiah($totalSisa) }}</strong></p>
     <p class="redup">Transfer ke {{ $rekening->bank ?? '' }} {{ $rekening->norek ?? '' }} a.n. {{ $rekening->atas_nama ?? '' }}</p>
+    @if($absensi)
+        <p class="redup">Absensi bulan ini: hadir {{ $absensi->hadir }}, sakit {{ $absensi->sakit }}, izin {{ $absensi->izin }}, alpa {{ $absensi->alpa }}</p>
+    @endif
     @if($siswa->janji)<p class="redup">Janji bayar {{ Tampil::tanggal($siswa->janji->tanggal->toDateString()) }} · {{ $siswa->janji->catatan }}</p>@endif
 </section>
 @if($pengumuman)

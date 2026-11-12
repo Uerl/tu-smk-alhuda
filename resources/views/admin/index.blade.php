@@ -6,6 +6,7 @@
     <div class="baris">
         <form method="post" action="{{ route('admin.kosongkan') }}">@csrf<button class="tombol">Kosongkan data contoh</button></form>
         <form method="post" action="{{ route('admin.sinkron') }}">@csrf<button class="tombol utama">Sinkron dari presensi</button></form>
+        <form method="post" action="{{ route('admin.absensi') }}">@csrf<button class="tombol">Tarik absensi</button></form>
     </div>
 </section>
 <section class="tabel-bungkus" style="margin-top:14px">

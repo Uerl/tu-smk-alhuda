@@ -2,6 +2,7 @@
 
 namespace App\Tu;
 
+use App\Models\Absensi;
 use App\Models\Pegawai;
 use App\Models\Rombel;
 use App\Models\Siswa;
@@ -9,6 +10,7 @@ use App\Models\TahunPelajaran;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use RuntimeException;
 
 class SumberPresensi
 {
@@ -238,5 +240,27 @@ class SumberPresensi
             ['tahun_pelajaran_id' => $tahunId, 'nama' => $kelas['nama']],
             $data,
         );
+    }
+
+    public static function sinkronAbsensi(): string
+    {
+        $paket = KlienPresensi::absensi();
+        $siswa = Siswa::query()->whereIn('nis', array_keys($paket['baris']))->pluck('id', 'nis');
+        $tersimpan = 0;
+        foreach ($paket['baris'] as $nis => $angka) {
+            if (! isset($siswa[$nis])) {
+                continue;
+            }
+            Absensi::query()->updateOrCreate(
+                ['siswa_id' => $siswa[$nis], 'bulan' => $paket['bulan']],
+                $angka,
+            );
+            $tersimpan++;
+        }
+        if ($tersimpan === 0) {
+            throw new RuntimeException('Absensi terbaca, tetapi NISN-nya belum ada di Tata Usaha. Tarik murid dulu.');
+        }
+
+        return 'Absensi '.$paket['bulan'].' tersimpan untuk '.$tersimpan.' murid.';
     }
 }

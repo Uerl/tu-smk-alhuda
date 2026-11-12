@@ -26,7 +26,7 @@
                     <a href="{{ route($rute) }}" @class(['aktif' => request()->routeIs($rute)])>{{ $label }}</a>
                 @endforeach
                 <p class="kelompok">Data</p>
-                @foreach(['tu.laporan'=>'Laporan','tu.rombel'=>'Rombel','tu.tagihan'=>'Tagihan','tu.administrasi'=>'Administrasi'] as $rute => $label)
+                @foreach(['tu.laporan'=>'Laporan','tu.rombel'=>'Rombel','tu.absensi'=>'Absensi','tu.tagihan'=>'Tagihan','tu.administrasi'=>'Administrasi'] as $rute => $label)
                     <a href="{{ route($rute) }}" @class(['aktif' => request()->routeIs($rute)])>{{ $label }}</a>
                 @endforeach
             @else
@@ -63,6 +63,7 @@
             <a href="{{ route('tu.cocok') }}">Cocokkan</a>
             <a href="{{ route('tu.laporan') }}">Laporan</a>
             <a href="{{ route('tu.rombel') }}">Rombel</a>
+            <a href="{{ route('tu.absensi') }}">Absensi</a>
             <a href="{{ route('tu.administrasi') }}">Administrasi</a>
             @if($peran === 'admin')<a href="{{ route('admin') }}">Admin</a>@endif
         </div>

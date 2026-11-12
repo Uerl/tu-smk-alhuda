@@ -20,6 +20,7 @@ class MuridController extends Controller
             'status' => Hitung::statusAdministrasi($siswa),
             'rekening' => Rekening::query()->where('aktif', true)->first(),
             'pengumuman' => \App\Models\Pengumuman::query()->where('aktif', true)->latest('id')->first(),
+            'absensi' => $siswa->absensi()->where('bulan', now()->format('Y-m'))->first(),
         ]);
     }
 

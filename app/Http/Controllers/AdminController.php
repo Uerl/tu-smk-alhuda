@@ -41,6 +41,18 @@ class AdminController extends Controller
         return back()->with('kabar', $kabar);
     }
 
+    public function absensi()
+    {
+        try {
+            $kabar = SumberPresensi::sinkronAbsensi();
+        } catch (\Throwable $e) {
+            return back()->with('galat', $e->getMessage());
+        }
+        Riwayat::catat('sinkron_absensi', 'absensi', null, $kabar);
+
+        return back()->with('kabar', $kabar);
+    }
+
     public function jabatan(Request $request, Pegawai $pegawai)
     {
         $data = $request->validate(['jabatan_tu' => 'nullable|in:kepala_tu,bendahara,staf_tu']);

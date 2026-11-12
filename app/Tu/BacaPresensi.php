@@ -236,4 +236,137 @@ class BacaPresensi
 
         return 'guru';
     }
+
+    public static function rekapAbsensi(string $html): array
+    {
+        $baris = [];
+        $dom = new DOMDocument();
+        $internal = libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);
+        libxml_clear_errors();
+        libxml_use_internal_errors($internal);
+        foreach ($dom->getElementsByTagName('table') as $table) {
+            $tabel = [];
+            foreach ($table->getElementsByTagName('tr') as $tr) {
+                if (! $tr instanceof DOMElement) {
+                    continue;
+                }
+                $sel = [];
+                foreach ($tr->childNodes as $selSel) {
+                    if (! $selSel instanceof DOMElement || ! in_array($selSel->nodeName, ['td', 'th'], true)) {
+                        continue;
+                    }
+                    $sel[] = trim(preg_replace('/\s+/u', ' ', $selSel->textContent) ?? '');
+                }
+                if ($sel !== []) {
+                    $tabel[] = $sel;
+                }
+            }
+            if (count($tabel) < 2) {
+                continue;
+            }
+            $kunci = array_map(fn ($judul) => self::kunciAbsen($judul), $tabel[0]);
+            $angka = array_intersect($kunci, ['hadir', 'sakit', 'izin', 'alpa']);
+            foreach (array_slice($tabel, 1) as $isi) {
+                $rekam = [];
+                foreach ($kunci as $indeks => $nama) {
+                    if ($nama && isset($isi[$indeks]) && $isi[$indeks] !== '') {
+                        $rekam[$nama] = $isi[$indeks];
+                    }
+                }
+                if (empty($rekam['nis'])) {
+                    continue;
+                }
+                $nis = $rekam['nis'];
+                if ($angka !== []) {
+                    $baris[$nis] = [
+                        'hadir' => self::angka($rekam['hadir'] ?? '0'),
+                        'sakit' => self::angka($rekam['sakit'] ?? '0'),
+                        'izin' => self::angka($rekam['izin'] ?? '0'),
+                        'alpa' => self::angka($rekam['alpa'] ?? '0'),
+                    ];
+                    continue;
+                }
+                $jenis = self::jenis($rekam['status'] ?? '');
+                if (! $jenis) {
+                    continue;
+                }
+                $baris[$nis] ??= ['hadir' => 0, 'sakit' => 0, 'izin' => 0, 'alpa' => 0];
+                $baris[$nis][$jenis]++;
+            }
+        }
+
+        return ['bulan' => self::bulan($html), 'baris' => $baris];
+    }
+
+    private static function kunciAbsen(string $judul): ?string
+    {
+        $judul = mb_strtolower(trim($judul));
+        if (preg_match('/naik|riwayat|lama|sebelum/', $judul)) {
+            return null;
+        }
+        if (str_contains($judul, 'nisn') || $judul === 'nis') {
+            return 'nis';
+        }
+        if (str_contains($judul, 'hadir') || $judul === 'h') {
+            return 'hadir';
+        }
+        if (str_contains($judul, 'sakit') || $judul === 's') {
+            return 'sakit';
+        }
+        if (str_contains($judul, 'izin') || $judul === 'i') {
+            return 'izin';
+        }
+        if (preg_match('/alpa|alfa|alpha/', $judul) || $judul === 'a') {
+            return 'alpa';
+        }
+        if (str_contains($judul, 'tanggal') || $judul === 'tgl') {
+            return 'tanggal';
+        }
+        if (str_contains($judul, 'keterangan') || $judul === 'status' || str_contains($judul, 'kehadiran')) {
+            return 'status';
+        }
+        if (str_contains($judul, 'nama')) {
+            return 'nama';
+        }
+
+        return null;
+    }
+
+    private static function jenis(string $status): ?string
+    {
+        $status = mb_strtolower(trim($status));
+        if (preg_match('/alpa|alfa|alpha|^a$/', $status)) {
+            return 'alpa';
+        }
+        if (str_contains($status, 'sakit') || $status === 's') {
+            return 'sakit';
+        }
+        if (str_contains($status, 'izin') || $status === 'i') {
+            return 'izin';
+        }
+        if (str_contains($status, 'hadir') || str_contains($status, 'masuk') || $status === 'h') {
+            return 'hadir';
+        }
+
+        return null;
+    }
+
+    private static function angka(string $nilai): int
+    {
+        return (int) preg_replace('/\D/', '', $nilai);
+    }
+
+    private static function bulan(string $html): string
+    {
+        $nama = ['januari' => 1, 'februari' => 2, 'maret' => 3, 'april' => 4, 'mei' => 5, 'juni' => 6, 'juli' => 7, 'agustus' => 8, 'september' => 9, 'oktober' => 10, 'november' => 11, 'desember' => 12];
+        if (preg_match('/\b(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+(20\d{2})\b/i', $html, $cocok)) {
+            return sprintf('%04d-%02d', $cocok[2], $nama[strtolower($cocok[1])]);
+        }
+        if (preg_match('/\b(20\d{2})-(0[1-9]|1[0-2])\b/', $html, $cocok)) {
+            return $cocok[1].'-'.$cocok[2];
+        }
+
+        return date('Y-m');
+    }
 }
