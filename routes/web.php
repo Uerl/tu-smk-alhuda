@@ -35,7 +35,6 @@ Route::middleware(['auth', 'peran:admin,staf'])->prefix('tu')->group(function ()
     Route::post('/cocok', [StafController::class, 'simpanCocok'])->name('tu.cocok.simpan');
     Route::get('/laporan', [StafController::class, 'laporan'])->name('tu.laporan');
     Route::get('/tunggakan.csv', [StafController::class, 'unduhTunggakan'])->name('tu.tunggakan.csv');
-    Route::get('/absensi', [StafController::class, 'absensi'])->name('tu.absensi');
     Route::get('/rombel', [StafController::class, 'rombel'])->name('tu.rombel');
     Route::get('/tagihan', [StafController::class, 'tagihan'])->name('tu.tagihan');
     Route::post('/tagihan', [StafController::class, 'simpanTagihan'])->name('tu.tagihan.simpan');
@@ -54,7 +53,6 @@ Route::middleware(['auth', 'peran:admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin');
     Route::post('/kosongkan', [AdminController::class, 'kosongkan'])->name('admin.kosongkan');
     Route::post('/sinkron', [AdminController::class, 'sinkron'])->name('admin.sinkron');
-    Route::post('/absensi', [AdminController::class, 'absensi'])->name('admin.absensi');
     Route::post('/jabatan/{pegawai}', [AdminController::class, 'jabatan'])->name('admin.jabatan');
     Route::post('/urutan/{pegawai}', [AdminController::class, 'urutan'])->name('admin.urutan');
     Route::post('/rombel/{rombel}', [AdminController::class, 'rombel'])->name('admin.rombel');

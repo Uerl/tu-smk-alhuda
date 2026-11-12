@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Absensi;
 use App\Models\Dispensasi;
 use App\Models\JanjiBayar;
 use App\Models\Keringanan;
@@ -321,29 +320,6 @@ class StafController extends Controller
             }
             fclose($berkas);
         }, 'tunggakan-tu.csv', ['Content-Type' => 'text/csv']);
-    }
-
-    public function absensi(Request $request)
-    {
-        $bulan = $request->string('bulan')->toString();
-        if (! preg_match('/^\d{4}-\d{2}$/', $bulan)) {
-            $bulan = now()->format('Y-m');
-        }
-        $rombelId = $request->integer('rombel');
-        $absensi = Absensi::query()
-            ->with(['siswa.rombel'])
-            ->where('bulan', $bulan)
-            ->when($rombelId > 0, fn ($query) => $query->whereHas('siswa', fn ($siswa) => $siswa->where('rombel_id', $rombelId)))
-            ->get()
-            ->sortBy(fn ($item) => sprintf('%s %s', $item->siswa->rombel->nama, $item->siswa->nama))
-            ->values();
-
-        return view('tu.absensi', [
-            'absensi' => $absensi,
-            'bulan' => $bulan,
-            'rombel' => Rombel::query()->orderBy('nama')->get(),
-            'rombelId' => $rombelId,
-        ]);
     }
 
     public function rombel()

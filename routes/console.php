@@ -11,7 +11,3 @@ Artisan::command('tu:kosongkan-akademik', function () {
 Artisan::command('tu:sinkron-presensi', function () {
     $this->info(SumberPresensi::sinkron());
 })->purpose('Tarik guru, karyawan, dan murid dari aplikasi presensi');
-
-Artisan::command('tu:sinkron-absensi', function () {
-    $this->info(SumberPresensi::sinkronAbsensi());
-})->purpose('Tarik rekap absensi murid dari aplikasi presensi');

@@ -51,12 +51,6 @@ class AturanTuTest extends TestCase
         $this->assertSame('XII PF', $naik['nama']);
         $this->assertSame('XII', $naik['tingkat']);
         $this->assertSame('PF', $naik['jurusan']);
-        $rekap = BacaPresensi::rekapAbsensi('<h2>Rekap November 2026</h2><table><tr><th>NISN</th><th>Nama</th><th>Hadir</th><th>Sakit</th><th>Izin</th><th>Alpa</th></tr><tr><td>0012345678</td><td>Ani</td><td>18</td><td>1</td><td>0</td><td>2</td></tr></table><table><tr><th>NISN</th><th>Tanggal</th><th>Status</th></tr><tr><td>0099</td><td>2026-11-02</td><td>Hadir</td></tr><tr><td>0099</td><td>2026-11-03</td><td>Alpa</td></tr></table>');
-        $this->assertSame('2026-11', $rekap['bulan']);
-        $this->assertSame(18, $rekap['baris']['0012345678']['hadir']);
-        $this->assertSame(2, $rekap['baris']['0012345678']['alpa']);
-        $this->assertSame(1, $rekap['baris']['0099']['hadir']);
-        $this->assertSame(1, $rekap['baris']['0099']['alpa']);
 
         SumberPresensi::kosongkanAkademik();
         $this->assertSame(0, Siswa::query()->count());

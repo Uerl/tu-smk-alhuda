@@ -30,45 +30,6 @@ class KlienPresensi
         return $paket;
     }
 
-    public static function absensi(): array
-    {
-        $permintaan = self::masuk();
-        $html = '';
-        $halaman = ['/rekap.php', '/absensi.php', '/kehadiran.php', '/harian.php', '/laporan.php', '/izin.php', '/siswa.php'];
-        $dasbor = $permintaan()->get('/dashboard.php');
-        if ($dasbor->successful() && ! str_contains($dasbor->body(), 'id="formLogin"')) {
-            if (preg_match_all('/href="([^"]+)"/', $dasbor->body(), $cocok)) {
-                foreach ($cocok[1] as $tautan) {
-                    if (! preg_match('/absen|rekap|hadir|izin|kehadiran/i', $tautan)) {
-                        continue;
-                    }
-                    $path = parse_url(html_entity_decode($tautan), PHP_URL_PATH) ?: '';
-                    if ($path !== '') {
-                        $halaman[] = str_starts_with($path, '/') ? $path : '/'.$path;
-                    }
-                }
-            }
-        }
-        $sudah = [];
-        foreach ($halaman as $jalan) {
-            if (isset($sudah[$jalan]) || count($sudah) >= 8) {
-                continue;
-            }
-            $sudah[$jalan] = true;
-            $jawab = $permintaan()->get($jalan);
-            if (! $jawab->successful() || str_contains($jawab->body(), 'id="formLogin"')) {
-                continue;
-            }
-            $html .= "\n".$jawab->body();
-        }
-        $paket = BacaPresensi::rekapAbsensi($html);
-        if ($paket['baris'] === []) {
-            throw new RuntimeException('Rekap absensi tidak ditemukan di presensi. Data absensi yang sudah ada tidak diubah.');
-        }
-
-        return $paket;
-    }
-
     private static function masuk(): \Closure
     {
         $dasar = rtrim((string) config('presensi.url'), '/');
