@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Dispensasi;
 use App\Models\JanjiBayar;
+use App\Models\Jurusan;
 use App\Models\Keringanan;
 use App\Models\Pegawai;
 use App\Models\Pembayaran;
@@ -577,9 +578,80 @@ class StafController extends Controller
 
     public function administrasi()
     {
-        $baris = Hitung::siswaSiap()->map(fn (Siswa $murid) => ['siswa' => $murid, 'status' => Hitung::statusAdministrasi($murid)]);
+        $baris = Hitung::siswaSiap()->map(fn (Siswa $murid) => [
+            'siswa' => $murid,
+            'status' => Hitung::statusAdministrasi($murid),
+            'terbayar' => (int) $murid->pembayaran->sum('jumlah'),
+        ]);
 
-        return view('tu.administrasi', ['baris' => $baris, 'rekening' => Rekening::query()->where('aktif', true)->first()]);
+        return view('tu.administrasi', [
+            'baris' => $baris,
+            'jurusan' => Jurusan::query()->orderBy('nama')->get(),
+            'rombel' => Rombel::query()->withCount('siswa')->with(['walikelas', 'bk'])->orderBy('tingkat')->orderBy('nama')->get(),
+            'guru' => Pegawai::query()->orderBy('nama')->get(),
+        ]);
+    }
+
+    public function simpanJurusan(Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required|string|max:80|unique:jurusan,nama',
+            'deskripsi' => 'nullable|string|max:500',
+        ]);
+        Jurusan::query()->create($data);
+
+        return back()->with('kabar', 'Jurusan ditambahkan.');
+    }
+
+    public function hapusJurusan(Jurusan $jurusan)
+    {
+        if (Rombel::query()->where('jurusan', $jurusan->nama)->exists()) {
+            return back()->with('galat', 'Jurusan masih dipakai rombel.');
+        }
+        $jurusan->delete();
+
+        return back()->with('kabar', 'Jurusan dihapus.');
+    }
+
+    public function simpanRombel(Request $request)
+    {
+        $data = $request->validate([
+            'tingkat' => 'required|in:X,XI,XII',
+            'nama' => 'required|string|max:50',
+            'jurusan' => 'required|exists:jurusan,nama',
+        ]);
+        $tahun = TahunPelajaran::query()->where('aktif', true)->first()
+            ?? TahunPelajaran::query()->create(['nama' => '2026/2027', 'aktif' => true]);
+        Rombel::query()->updateOrCreate(
+            ['tahun_pelajaran_id' => $tahun->id, 'nama' => $data['nama']],
+            ['tingkat' => $data['tingkat'], 'jurusan' => $data['jurusan']],
+        );
+
+        return back()->with('kabar', 'Rombel disimpan.');
+    }
+
+    public function hapusRombel(Rombel $rombel)
+    {
+        if ($rombel->siswa()->exists()) {
+            return back()->with('galat', 'Rombel masih punya murid.');
+        }
+        $rombel->delete();
+
+        return back()->with('kabar', 'Rombel dihapus.');
+    }
+
+    public function petugasKelas(Request $request, Rombel $rombel)
+    {
+        $data = $request->validate([
+            'walikelas_id' => 'nullable|exists:pegawai,id',
+            'bk_id' => 'nullable|exists:pegawai,id',
+        ]);
+        $rombel->update([
+            'walikelas_id' => $data['walikelas_id'] ?: null,
+            'bk_id' => $data['bk_id'] ?: null,
+        ]);
+
+        return back()->with('kabar', 'Walikelas dan BK diperbarui.');
     }
 
     public function dispensasi(Request $request)

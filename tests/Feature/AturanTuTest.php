@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Jurusan;
 use App\Models\Rombel;
 use App\Models\Siswa;
 use App\Models\User;
@@ -19,6 +20,22 @@ class AturanTuTest extends TestCase
     {
         parent::setUp();
         $this->seed();
+    }
+
+    public function test_administrasi_menyimpan_jurusan_dan_tetap_punya_dispensasi(): void
+    {
+        $admin = User::query()->where('username', 'admin')->first();
+        $this->actingAs($admin)->post(route('tu.jurusan.simpan'), [
+            'nama' => 'Tata Boga',
+            'deskripsi' => 'Kuliner',
+        ])->assertRedirect();
+        $this->assertDatabaseHas('jurusan', ['nama' => 'Tata Boga', 'deskripsi' => 'Kuliner']);
+        $this->actingAs($admin)->get(route('tu.administrasi'))
+            ->assertOk()
+            ->assertSee('Total pernah dibayar')
+            ->assertSee('Dispensasi')
+            ->assertSee('Tata Boga');
+        Jurusan::query()->where('nama', 'Tata Boga')->delete();
     }
 
     public function test_keringanan_mengurangi_sisa_seragam(): void

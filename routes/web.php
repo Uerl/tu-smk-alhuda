@@ -45,6 +45,11 @@ Route::middleware(['auth', 'peran:admin,staf'])->prefix('tu')->group(function ()
     Route::post('/keringanan', [StafController::class, 'keringanan'])->name('tu.keringanan');
     Route::post('/koreksi', [StafController::class, 'koreksi'])->name('tu.koreksi');
     Route::get('/administrasi', [StafController::class, 'administrasi'])->name('tu.administrasi');
+    Route::post('/jurusan', [StafController::class, 'simpanJurusan'])->name('tu.jurusan.simpan');
+    Route::delete('/jurusan/{jurusan}', [StafController::class, 'hapusJurusan'])->name('tu.jurusan.hapus');
+    Route::post('/rombel', [StafController::class, 'simpanRombel'])->name('tu.rombel.simpan');
+    Route::delete('/rombel/{rombel}', [StafController::class, 'hapusRombel'])->name('tu.rombel.hapus');
+    Route::post('/rombel/{rombel}/petugas', [StafController::class, 'petugasKelas'])->name('tu.rombel.petugas');
     Route::post('/dispensasi', [StafController::class, 'dispensasi'])->name('tu.dispensasi');
     Route::delete('/dispensasi/{siswa}', [StafController::class, 'cabutDispensasi'])->name('tu.dispensasi.cabut');
 });
