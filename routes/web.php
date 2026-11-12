@@ -36,6 +36,7 @@ Route::middleware(['auth', 'peran:admin,staf'])->prefix('tu')->group(function ()
     Route::get('/laporan', [StafController::class, 'laporan'])->name('tu.laporan');
     Route::get('/tunggakan.csv', [StafController::class, 'unduhTunggakan'])->name('tu.tunggakan.csv');
     Route::get('/absensi', [StafController::class, 'absensi'])->name('tu.absensi');
+    Route::get('/rombel', [StafController::class, 'rombel'])->name('tu.rombel');
     Route::get('/tagihan', [StafController::class, 'tagihan'])->name('tu.tagihan');
     Route::post('/tagihan', [StafController::class, 'simpanTagihan'])->name('tu.tagihan.simpan');
     Route::post('/tagihan/{tagihan}/bulan', [StafController::class, 'bulanDepan'])->name('tu.tagihan.bulan');
