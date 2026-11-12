@@ -2,7 +2,7 @@
 @section('isi')
 <section class="kartu">
     <h2>Data dari presensi</h2>
-    <p class="redup">Angkatan, rombel, jurusan, murid, walikelas, dan BK diambil dari {{ config('presensi.url') }}. Akun tata usaha, rekening, dan tagihan tidak dihapus.</p>
+    <p class="redup">Pertama guru dan karyawan, kemudian murid: NISN, kelas, dan rombel. Sumber {{ config('presensi.url') }}. Akun tata usaha, rekening, dan tagihan tidak dihapus.</p>
     <div class="baris">
         <form method="post" action="{{ route('admin.kosongkan') }}">@csrf<button class="tombol">Kosongkan data contoh</button></form>
         <form method="post" action="{{ route('admin.sinkron') }}">@csrf<button class="tombol utama">Sinkron dari presensi</button></form>

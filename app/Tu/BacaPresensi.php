@@ -63,24 +63,39 @@ class BacaPresensi
 
     private static function masuk(array &$paket, array $rekam): void
     {
-        if (isset($rekam['nis'], $rekam['nama'])) {
-            $kelas = self::kelas($rekam['kelas'] ?? '', $rekam['tingkat'] ?? '', $rekam['jurusan'] ?? '');
+        if (isset($rekam['nis'], $rekam['nama']) && empty($rekam['nip'])) {
+            $tingkat = trim($rekam['kelas'] ?? '');
+            $rombel = trim($rekam['rombel'] ?? '');
+            if ($rombel === '' && ! preg_match('/^(XII|XI|X)$/i', $tingkat)) {
+                $rombel = $tingkat;
+                $tingkat = '';
+            }
+            if (self::riwayat($tingkat) || self::riwayat($rombel)) {
+                return;
+            }
+            $kelas = self::kelas($rombel, $tingkat, $rekam['jurusan'] ?? '');
             $paket['siswa'][$rekam['nis']] = [
                 'nis' => $rekam['nis'],
                 'nama' => $rekam['nama'],
                 'rombel' => $kelas['nama'],
             ];
             $paket['rombel'][$kelas['nama']] = array_merge($paket['rombel'][$kelas['nama']] ?? [], $kelas);
+
+            return;
         }
-        if (isset($rekam['nip'], $rekam['nama']) && ! isset($rekam['nis'])) {
-            $paket['pegawai'][$rekam['nip']] = [
-                'nip' => $rekam['nip'],
+        if (isset($rekam['nama']) && ! isset($rekam['nis'])) {
+            $nip = $rekam['nip'] ?? ('G-'.substr(md5($rekam['nama']), 0, 12));
+            $paket['pegawai'][$nip] = [
+                'nip' => mb_substr($nip, 0, 30),
                 'nama' => $rekam['nama'],
                 'bagian' => self::bagian($rekam['bagian'] ?? ''),
             ];
         }
-        if (isset($rekam['kelas']) && (isset($rekam['walikelas']) || isset($rekam['bk']))) {
-            $kelas = self::kelas($rekam['kelas'], $rekam['tingkat'] ?? '', $rekam['jurusan'] ?? '');
+        $namaKelas = $rekam['rombel'] ?? ($rekam['kelas'] ?? '');
+        if ($namaKelas !== '' && (isset($rekam['walikelas']) || isset($rekam['bk'])) && ! self::riwayat($namaKelas)) {
+            $tingkat = preg_match('/^(XII|XI|X)$/i', $namaKelas) ? $namaKelas : ($rekam['kelas'] ?? '');
+            $rombel = preg_match('/^(XII|XI|X)$/i', $namaKelas) ? ($rekam['rombel'] ?? '') : $namaKelas;
+            $kelas = self::kelas($rombel, $tingkat, $rekam['jurusan'] ?? '');
             $paket['rombel'][$kelas['nama']] = array_merge($paket['rombel'][$kelas['nama']] ?? [], $kelas, array_filter([
                 'walikelas' => $rekam['walikelas'] ?? null,
                 'bk' => $rekam['bk'] ?? null,
@@ -88,21 +103,43 @@ class BacaPresensi
         }
     }
 
+    private static function riwayat(string $teks): bool
+    {
+        return str_contains($teks, '→') || str_contains($teks, '->');
+    }
+
     private static function kunci(string $judul): ?string
     {
-        $judul = mb_strtolower($judul);
-        foreach ([
-            'nisn' => 'nis', 'nis' => 'nis', 'no induk' => 'nis',
-            'nama siswa' => 'nama', 'nama murid' => 'nama', 'nama lengkap' => 'nama', 'nama guru' => 'nama', 'nama' => 'nama',
-            'wali kelas' => 'walikelas', 'walikelas' => 'walikelas',
-            'guru bk' => 'bk', 'pembimbing' => 'bk', 'bk' => 'bk',
-            'rombongan' => 'kelas', 'rombel' => 'kelas', 'kelas' => 'kelas',
-            'jurusan' => 'jurusan', 'tingkat' => 'tingkat',
-            'nip' => 'nip', 'jabatan' => 'bagian', 'bagian' => 'bagian',
-        ] as $cari => $kunci) {
-            if (str_contains($judul, $cari)) {
-                return $kunci;
-            }
+        $judul = mb_strtolower(trim($judul));
+        if (preg_match('/naik|riwayat|lama|history|sebelum/', $judul)) {
+            return null;
+        }
+        if (str_contains($judul, 'nisn') || $judul === 'nis' || str_contains($judul, 'no induk')) {
+            return 'nis';
+        }
+        if (str_contains($judul, 'wali')) {
+            return 'walikelas';
+        }
+        if ($judul === 'bk' || str_contains($judul, 'guru bk') || str_contains($judul, 'bimbingan')) {
+            return 'bk';
+        }
+        if (str_contains($judul, 'rombel') || str_contains($judul, 'rombongan')) {
+            return 'rombel';
+        }
+        if ($judul === 'kelas' || $judul === 'tingkat' || str_contains($judul, 'tingkat')) {
+            return 'kelas';
+        }
+        if (str_contains($judul, 'jurusan') || str_contains($judul, 'kompetensi')) {
+            return 'jurusan';
+        }
+        if (str_contains($judul, 'nip') || str_contains($judul, 'nuptk')) {
+            return 'nip';
+        }
+        if (str_contains($judul, 'jabatan') || str_contains($judul, 'bagian') || $judul === 'status') {
+            return 'bagian';
+        }
+        if (str_contains($judul, 'nama')) {
+            return 'nama';
         }
 
         return null;

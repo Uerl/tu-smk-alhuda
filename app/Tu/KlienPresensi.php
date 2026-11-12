@@ -30,31 +30,19 @@ class KlienPresensi
             throw new RuntimeException('Presensi menolak masuk. Periksa username dan kata sandi di .env.');
         }
         $paket = ['pegawai' => [], 'rombel' => [], 'siswa' => []];
-        $halaman = ['/dashboard.php', '/siswa.php', '/guru.php', '/walikelas.php', '/jadwal.php', '/rekap.php'];
-        $sudah = [];
-        while ($halaman !== []) {
-            $jalan = array_shift($halaman);
-            if (isset($sudah[$jalan]) || count($sudah) > 12) {
-                continue;
-            }
-            $sudah[$jalan] = true;
+        foreach (['/guru.php', '/karyawan.php', '/pegawai.php'] as $jalan) {
             $jawab = $permintaan()->get($jalan);
-            if (! $jawab->successful() || str_contains($jawab->body(), 'id="formLogin"')) {
-                continue;
-            }
-            $paket = BacaPresensi::gabung($paket, BacaPresensi::dariHtml($jawab->body()));
-            if (preg_match_all('/href="([^"]+\.php[^"]*)"/', $jawab->body(), $cocok)) {
-                foreach ($cocok[1] as $tautan) {
-                    $path = parse_url(html_entity_decode($tautan), PHP_URL_PATH) ?: '';
-                    if ($path === '' || str_contains($path, 'logout') || str_contains($path, 'keluar')) {
-                        continue;
-                    }
-                    $halaman[] = str_starts_with($path, '/') ? $path : '/'.$path;
-                }
+            if ($jawab->successful() && ! str_contains($jawab->body(), 'id="formLogin"')) {
+                $paket = BacaPresensi::gabung($paket, BacaPresensi::dariHtml($jawab->body()));
             }
         }
+        $murid = $permintaan()->get('/siswa.php');
+        if (! $murid->successful() || str_contains($murid->body(), 'id="formLogin"')) {
+            throw new RuntimeException('Halaman murid presensi tidak terbuka setelah login.');
+        }
+        $paket = BacaPresensi::gabung($paket, BacaPresensi::dariHtml($murid->body()));
         if ($paket['siswa'] === []) {
-            throw new RuntimeException('Masuk ke presensi berhasil, tetapi tabel murid tidak ditemukan. Sinkron dibatalkan, data lama tidak dihapus.');
+            throw new RuntimeException('Tabel murid tidak berisi NISN, kelas, dan rombel. Data lama tidak dihapus.');
         }
 
         return $paket;
